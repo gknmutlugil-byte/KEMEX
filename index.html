@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>KEMEX</title>
 
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#131722">
+
 <style>
 *{box-sizing:border-box}
 
@@ -27,6 +30,8 @@ button{cursor:pointer}
     display:flex;
     flex-direction:column;
 }
+
+/* HEADER */
 
 .header{
     height:55px;
@@ -82,11 +87,15 @@ button{cursor:pointer}
     font-size:11px;
 }
 
+/* MAIN */
+
 .main{
     flex:1;
     min-height:0;
     display:flex;
 }
+
+/* LEFT */
 
 .left{
     flex:1;
@@ -120,6 +129,8 @@ button{cursor:pointer}
     color:#fff;
 }
 
+/* CHART */
+
 .chart{
     flex:1;
     min-height:250px;
@@ -146,6 +157,8 @@ button{cursor:pointer}
     line-height:17px;
     pointer-events:none;
 }
+
+/* MARKETS */
 
 .marketPanel{
     width:285px;
@@ -229,6 +242,8 @@ button{cursor:pointer}
 .red{color:#ef5350}
 .yellow{color:#f0b90b}
 .gray{color:#7d8592}
+
+/* BOTTOM */
 
 .bottom{
     height:280px;
@@ -373,6 +388,10 @@ th,td{
     font-size:8px;
 }
 
+.liq{
+    color:#ff687a;
+}
+
 .historyRow{
     display:grid;
     grid-template-columns:40px 1fr 48px;
@@ -381,6 +400,8 @@ th,td{
     border-bottom:1px solid #292e39;
     font-size:8px;
 }
+
+/* TABLET */
 
 @media(max-width:1100px){
 
@@ -406,6 +427,8 @@ th,td{
     }
 }
 
+/* DAR TABLET */
+
 @media(max-width:800px){
 
     .marketPanel{
@@ -429,6 +452,8 @@ th,td{
         min-width:300px;
     }
 }
+
+/* TELEFON */
 
 @media(max-width:550px){
 
@@ -478,9 +503,13 @@ th,td{
 
 <header class="header">
 
-    <div class="logo">⚡ KEMEX</div>
+    <div class="logo">
+        ⚡ KEMEX
+    </div>
 
-    <div class="demo">PRO DEMO</div>
+    <div class="demo">
+        PRO DEMO
+    </div>
 
     <input
         id="search"
@@ -646,7 +675,9 @@ th,td{
 
                 <span style="float:right">
                     PNL:
-                    <b id="totalPnl">0.00</b>
+                    <b id="totalPnl">
+                        0.00
+                    </b>
                 </span>
 
             </div>
@@ -694,9 +725,13 @@ th,td{
 
     <div class="marketHeader">
 
-        <span>KEMEX Piyasaları</span>
+        <span>
+            KEMEX Piyasaları
+        </span>
 
-        <span id="count" class="marketCount">120</span>
+        <span id="count" class="marketCount">
+            120
+        </span>
 
     </div>
 
@@ -714,182 +749,33 @@ th,td{
    KEMEX DEMO ENGINE
 ===================================================== */
 
-const TOTAL_MARKETS = 120;
+const TOTAL_MARKETS=120;
 
-/* KALICI KAYIT ANAHTARI */
-const STORAGE_KEY = "KEMEX_SAVE_V2";
+let timeframe="1m";
+let selected="KEMCOIN";
 
-let timeframe = "1m";
-let selected = "KEMCOIN";
+let balance=10000;
+let reserved=0;
 
-let balance = 10000;
-let reserved = 0;
+let markets=[];
+let positions=[];
+let history=[];
 
-let markets = [];
-let positions = [];
-let history = [];
+const canvas=document.getElementById("chart");
+const ctx=canvas.getContext("2d");
 
-
-/* =====================================================
-   KAYDETME SİSTEMİ
-===================================================== */
-
-function saveGame(){
-
-    try{
-
-        const data = {
-
-            balance: balance,
-
-            reserved: reserved,
-
-            positions: positions,
-
-            history: history,
-
-            selected: selected,
-
-            timeframe: timeframe,
-
-            markets: markets
-
-        };
-
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(data)
-        );
-
-    }catch(error){
-
-        console.error(
-            "KEMEX kayıt hatası:",
-            error
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-   KAYDI YÜKLE
-===================================================== */
-
-function loadGame(){
-
-    try{
-
-        const saved =
-            localStorage.getItem(
-                STORAGE_KEY
-            );
-
-        if(!saved)
-            return false;
-
-        const data =
-            JSON.parse(saved);
-
-        if(
-            typeof data.balance === "number"
-        ){
-            balance = data.balance;
-        }
-
-        if(
-            typeof data.reserved === "number"
-        ){
-            reserved = data.reserved;
-        }
-
-        if(
-            Array.isArray(data.positions)
-        ){
-            positions = data.positions;
-        }
-
-        if(
-            Array.isArray(data.history)
-        ){
-            history = data.history;
-        }
-
-        if(
-            typeof data.selected === "string"
-        ){
-            selected = data.selected;
-        }
-
-        if(
-            typeof data.timeframe === "string"
-        ){
-            timeframe = data.timeframe;
-        }
-
-        if(
-            Array.isArray(data.markets) &&
-            data.markets.length > 0
-        ){
-
-            markets = data.markets;
-
-        }
-
-        return true;
-
-    }catch(error){
-
-        console.error(
-            "KEMEX kayıt yükleme hatası:",
-            error
-        );
-
-        return false;
-
-    }
-
-}
-
-
-/* Sayfa kapanmadan önce kaydet */
-
-window.addEventListener(
-    "beforeunload",
-    saveGame
-);
-
-
-/* Mobil cihazlarda sayfa gizlenince kaydet */
-
-document.addEventListener(
-    "visibilitychange",
-    function(){
-
-        if(
-            document.visibilityState ===
-            "hidden"
-        ){
-
-            saveGame();
-
-        }
-
-    }
-);
-
-
-/* =====================================================
-   YARDIMCI
-===================================================== */
+const names=[
+"KEMCOIN","KEMEX","KEMX","KEMORA","KEMIX",
+"KEMIA","KEMO","KEMZ","KEMA","KEMB","KEMC",
+"KEMD","KEME","KEMF","KEMG","KEMH","KEMI",
+"KEMJ","KEMK","KEML","KEMM","KEMN","KEMO2",
+"KEMP","KEMQ","KEMR","KEMS","KEMT","KEMU",
+"KEMV","KEMW","KEMY","KEMZ2"
+];
 
 function random(min,max){
-
     return Math.random()*(max-min)+min;
-
 }
-
 
 function priceFormat(n){
 
@@ -906,9 +792,7 @@ function priceFormat(n){
         return n.toFixed(6);
 
     return n.toFixed(8);
-
 }
-
 
 function money(n){
 
@@ -920,28 +804,21 @@ function money(n){
                 maximumFractionDigits:2
             }
         );
-
 }
-
 
 function marketCap(n){
 
     if(n>=1e9)
-        return "$"+
-            (n/1e9).toFixed(2)+"B";
+        return "$"+(n/1e9).toFixed(2)+"B";
 
     if(n>=1e6)
-        return "$"+
-            (n/1e6).toFixed(2)+"M";
+        return "$"+(n/1e6).toFixed(2)+"M";
 
     if(n>=1e3)
-        return "$"+
-            (n/1e3).toFixed(2)+"K";
+        return "$"+(n/1e3).toFixed(2)+"K";
 
     return "$"+n.toFixed(0);
-
 }
-
 
 function getStep(){
 
@@ -961,23 +838,11 @@ function getStep(){
         return 14400000;
 
     return 86400000;
-
 }
-
 
 /* =====================================================
    PİYASALAR
 ===================================================== */
-
-const names=[
-"KEMCOIN","KEMEX","KEMX","KEMORA","KEMIX",
-"KEMIA","KEMO","KEMZ","KEMA","KEMB","KEMC",
-"KEMD","KEME","KEMF","KEMG","KEMH","KEMI",
-"KEMJ","KEMK","KEML","KEMM","KEMN","KEMO2",
-"KEMP","KEMQ","KEMR","KEMS","KEMT","KEMU",
-"KEMV","KEMW","KEMY","KEMZ2"
-];
-
 
 function createMarket(symbol,index){
 
@@ -998,10 +863,7 @@ function createMarket(symbol,index){
     else
         price=random(.1,300);
 
-    let supply=random(
-        2000000,
-        800000000
-    );
+    let supply=random(2000000,800000000);
 
     let market={
         symbol:symbol,
@@ -1017,25 +879,17 @@ function createMarket(symbol,index){
     createCandles(market);
 
     return market;
-
 }
-
 
 function createCandles(market){
 
     let price=market.price;
-
     let now=Date.now();
-
     let interval=getStep();
 
     market.candles=[];
 
-    for(
-        let i=100;
-        i>0;
-        i--
-    ){
+    for(let i=100;i>0;i--){
 
         let open=price;
 
@@ -1052,48 +906,27 @@ function createCandles(market){
 
         let high=
             Math.max(open,close)*
-            (
-                1+
-                Math.random()*
-                market.volatility
-            );
+            (1+Math.random()*market.volatility);
 
         let low=
             Math.min(open,close)*
-            (
-                1-
-                Math.random()*
-                market.volatility
-            );
+            (1-Math.random()*market.volatility);
 
         market.candles.push({
-
-            time:
-                now-i*interval,
-
+            time:now-i*interval,
             open:open,
             high:high,
             low:low,
             close:close
-
         });
 
         price=close;
-
     }
 
     market.price=price;
-
 }
 
-
-/* İlk açılışta piyasaları oluştur */
-
-for(
-    let i=0;
-    i<TOTAL_MARKETS;
-    i++
-){
+for(let i=0;i<TOTAL_MARKETS;i++){
 
     let symbol;
 
@@ -1103,21 +936,9 @@ for(
         symbol="KEM"+(i+1);
 
     markets.push(
-        createMarket(
-            symbol,
-            i
-        )
+        createMarket(symbol,i)
     );
-
 }
-
-
-/* =====================================================
-   KAYDI ŞİMDİ YÜKLE
-===================================================== */
-
-loadGame();
-
 
 /* =====================================================
    PİYASA LİSTESİ
@@ -1126,38 +947,26 @@ loadGame();
 function renderMarkets(){
 
     const query=
-        document.getElementById(
-            "search"
-        )
+        document.getElementById("search")
         .value
         .trim()
         .toUpperCase();
 
     const filtered=
         markets.filter(
-            m =>
-                m.symbol.includes(query)
+            m=>m.symbol.includes(query)
         );
 
-    document.getElementById(
-        "count"
-    ).textContent=
+    document.getElementById("count").textContent=
         filtered.length;
 
-    document.getElementById(
-        "markets"
-    ).innerHTML=
+    document.getElementById("markets").innerHTML=
         filtered.map(
             m=>`
 
             <div
-                class="market ${
-                    m.symbol===selected
-                    ?"active":""
-                }"
-                onclick="
-                    selectMarket('${m.symbol}')
-                "
+                class="market ${m.symbol===selected?"active":""}"
+                onclick="selectMarket('${m.symbol}')"
             >
 
                 <div>
@@ -1167,8 +976,7 @@ function renderMarkets(){
                     </div>
 
                     <div class="marketCap">
-                        Piyasa Değeri
-                        ${marketCap(m.marketCap)}
+                        Piyasa Değeri ${marketCap(m.marketCap)}
                     </div>
 
                 </div>
@@ -1180,100 +988,52 @@ function renderMarkets(){
                     </div>
 
                     <div
-                        class="
-                        marketChange
-                        ${m.change>=0
-                            ?"green"
-                            :"red"}
-                        "
+                        class="marketChange ${m.change>=0?"green":"red"}"
                     >
-                        ${
-                            m.change>=0
-                            ?"+":""
-                        }${m.change.toFixed(2)}%
+                        ${m.change>=0?"+":""}${m.change.toFixed(2)}%
                     </div>
 
                 </div>
 
             </div>
-
         `
         )
         .join("");
-
 }
-
 
 function updateMarkets(){
 
-    document
-        .querySelectorAll(".market")
-        .forEach(
-            row=>{
+    document.querySelectorAll(".market").forEach(row=>{
 
-                const name=
-                    row
-                    .querySelector(
-                        ".marketName"
-                    )
-                    ?.textContent
-                    .trim();
+        const name=
+            row.querySelector(".marketName")
+            ?.textContent
+            .trim();
 
-                const market=
-                    markets.find(
-                        x =>
-                            x.symbol===name
-                    );
+        const market=
+            markets.find(x=>x.symbol===name);
 
-                if(!market)
-                    return;
+        if(!market)
+            return;
 
-                row
-                    .querySelector(
-                        ".marketPrice"
-                    )
-                    .textContent=
-                        priceFormat(
-                            market.price
-                        );
+        row.querySelector(".marketPrice").textContent=
+            priceFormat(market.price);
 
-                row
-                    .querySelector(
-                        ".marketCap"
-                    )
-                    .textContent=
-                        "Piyasa Değeri "+
-                        marketCap(
-                            market.marketCap
-                        );
+        row.querySelector(".marketCap").textContent=
+            "Piyasa Değeri "+marketCap(market.marketCap);
 
-                const change=
-                    row
-                    .querySelector(
-                        ".marketChange"
-                    );
+        const change=
+            row.querySelector(".marketChange");
 
-                change.textContent=
-                    (
-                        market.change>=0
-                        ?"+":""
-                    )+
-                    market.change.toFixed(2)+
-                    "%";
+        change.textContent=
+            (market.change>=0?"+":"")+
+            market.change.toFixed(2)+"%";
 
-                change.className=
-                    "marketChange "+
-                    (
-                        market.change>=0
-                        ?"green"
-                        :"red"
-                    );
-
-            }
-        );
-
+        change.className=
+            "marketChange "+
+            (market.change>=0?"green":"red");
+    });
 }
-
 
 /* =====================================================
    COIN SEÇİMİ
@@ -1284,47 +1044,27 @@ function selectMarket(symbol){
     selected=symbol;
 
     const market=
-        markets.find(
-            m =>
-                m.symbol===symbol
-        );
+        markets.find(m=>m.symbol===symbol);
 
     if(!market)
         return;
 
-    document.getElementById(
-        "tradeSymbol"
-    ).textContent=
+    document.getElementById("tradeSymbol").textContent=
         symbol;
 
     renderMarkets();
-
     drawChart();
-
     updateInfo();
-
     renderOrderBook();
-
-    saveGame();
-
 }
-
 
 /* =====================================================
    CHART
 ===================================================== */
 
-const canvas=
-    document.getElementById("chart");
-
-const ctx=
-    canvas.getContext("2d");
-
-
 function resizeCanvas(){
 
-    const rect=
-        canvas.getBoundingClientRect();
+    const rect=canvas.getBoundingClientRect();
 
     const dpr=
         Math.min(
@@ -1333,16 +1073,10 @@ function resizeCanvas(){
         );
 
     canvas.width=
-        Math.max(
-            1,
-            rect.width*dpr
-        );
+        Math.max(1,rect.width*dpr);
 
     canvas.height=
-        Math.max(
-            1,
-            rect.height*dpr
-        );
+        Math.max(1,rect.height*dpr);
 
     ctx.setTransform(
         dpr,
@@ -1354,23 +1088,17 @@ function resizeCanvas(){
     );
 
     drawChart();
-
 }
-
 
 window.addEventListener(
     "resize",
     resizeCanvas
 );
 
-
 function drawChart(){
 
     const market=
-        markets.find(
-            m =>
-                m.symbol===selected
-        );
+        markets.find(m=>m.symbol===selected);
 
     if(!market)
         return;
@@ -1384,12 +1112,7 @@ function drawChart(){
     const width=rect.width;
     const height=rect.height;
 
-    ctx.clearRect(
-        0,
-        0,
-        width,
-        height
-    );
+    ctx.clearRect(0,0,width,height);
 
     if(data.length<2)
         return;
@@ -1397,21 +1120,12 @@ function drawChart(){
     let min=Infinity;
     let max=-Infinity;
 
-    data.forEach(
-        candle=>{
+    data.forEach(candle=>{
 
-            min=Math.min(
-                min,
-                candle.low
-            );
+        min=Math.min(min,candle.low);
+        max=Math.max(max,candle.high);
 
-            max=Math.max(
-                max,
-                candle.high
-            );
-
-        }
-    );
+    });
 
     const range=max-min||1;
 
@@ -1429,11 +1143,7 @@ function drawChart(){
     ctx.strokeStyle="#171b24";
     ctx.lineWidth=1;
 
-    for(
-        let i=0;
-        i<6;
-        i++
-    ){
+    for(let i=0;i<6;i++){
 
         const y=
             top+
@@ -1441,15 +1151,8 @@ function drawChart(){
 
         ctx.beginPath();
 
-        ctx.moveTo(
-            left,
-            y
-        );
-
-        ctx.lineTo(
-            width-right,
-            y
-        );
+        ctx.moveTo(left,y);
+        ctx.lineTo(width-right,y);
 
         ctx.stroke();
 
@@ -1457,101 +1160,83 @@ function drawChart(){
         ctx.font="10px Arial";
 
         ctx.fillText(
-            priceFormat(
-                max-range*i/5
-            ),
+            priceFormat(max-range*i/5),
             width-right+5,
             y+3
         );
-
     }
 
     const spacing=
         chartWidth/data.length;
 
     const bodyWidth=
-        Math.max(
-            2,
-            spacing*.62
+        Math.max(2,spacing*.62);
+
+    data.forEach((candle,index)=>{
+
+        const x=
+            left+
+            spacing*index+
+            spacing/2;
+
+        const highY=
+            top+
+            (
+                1-
+                (candle.high-min)/range
+            )*
+            chartHeight;
+
+        const lowY=
+            top+
+            (
+                1-
+                (candle.low-min)/range
+            )*
+            chartHeight;
+
+        const openY=
+            top+
+            (
+                1-
+                (candle.open-min)/range
+            )*
+            chartHeight;
+
+        const closeY=
+            top+
+            (
+                1-
+                (candle.close-min)/range
+            )*
+            chartHeight;
+
+        const up=
+            candle.close>=candle.open;
+
+        ctx.strokeStyle=
+            up?"#26a69a":"#ef5350";
+
+        ctx.fillStyle=
+            up?"#26a69a":"#ef5350";
+
+        ctx.beginPath();
+
+        ctx.moveTo(x,highY);
+        ctx.lineTo(x,lowY);
+
+        ctx.stroke();
+
+        ctx.fillRect(
+            x-bodyWidth/2,
+            Math.min(openY,closeY),
+            bodyWidth,
+            Math.max(
+                1,
+                Math.abs(closeY-openY)
+            )
         );
-
-    data.forEach(
-        (candle,index)=>{
-
-            const x=
-                left+
-                spacing*index+
-                spacing/2;
-
-            const highY=
-                top+
-                (
-                    1-
-                    (candle.high-min)/range
-                )*
-                chartHeight;
-
-            const lowY=
-                top+
-                (
-                    1-
-                    (candle.low-min)/range
-                )*
-                chartHeight;
-
-            const openY=
-                top+
-                (
-                    1-
-                    (candle.open-min)/range
-                )*
-                chartHeight;
-
-            const closeY=
-                top+
-                (
-                    1-
-                    (candle.close-min)/range
-                )*
-                chartHeight;
-
-            const up=
-                candle.close>=candle.open;
-
-            ctx.strokeStyle=
-                up
-                ?"#26a69a"
-                :"#ef5350";
-
-            ctx.fillStyle=
-                up
-                ?"#26a69a"
-                :"#ef5350";
-
-            ctx.beginPath();
-
-            ctx.moveTo(x,highY);
-            ctx.lineTo(x,lowY);
-
-            ctx.stroke();
-
-            ctx.fillRect(
-                x-bodyWidth/2,
-                Math.min(
-                    openY,
-                    closeY
-                ),
-                bodyWidth,
-                Math.max(
-                    1,
-                    Math.abs(
-                        closeY-openY
-                    )
-                )
-            );
-
-        }
-    );
+    });
 
     const price=market.price;
 
@@ -1564,20 +1249,12 @@ function drawChart(){
         chartHeight;
 
     ctx.strokeStyle="#f0b90b";
-
     ctx.setLineDash([4,4]);
 
     ctx.beginPath();
 
-    ctx.moveTo(
-        left,
-        priceY
-    );
-
-    ctx.lineTo(
-        width-right,
-        priceY
-    );
+    ctx.moveTo(left,priceY);
+    ctx.lineTo(width-right,priceY);
 
     ctx.stroke();
 
@@ -1593,7 +1270,6 @@ function drawChart(){
     );
 
     ctx.fillStyle="#111";
-
     ctx.font="10px Arial";
 
     ctx.fillText(
@@ -1601,9 +1277,7 @@ function drawChart(){
         width-right+5,
         priceY+3
     );
-
 }
-
 
 /* =====================================================
    BİLGİ
@@ -1612,17 +1286,12 @@ function drawChart(){
 function updateInfo(){
 
     const market=
-        markets.find(
-            m =>
-                m.symbol===selected
-        );
+        markets.find(m=>m.symbol===selected);
 
     if(!market)
         return;
 
-    document.getElementById(
-        "chartInfo"
-    ).innerHTML=`
+    document.getElementById("chartInfo").innerHTML=`
 
         <b>${market.symbol}</b><br>
 
@@ -1635,23 +1304,12 @@ function updateInfo(){
         <br>
 
         Değişim:
-        <span
-            class="
-            ${market.change>=0
-                ?"green"
-                :"red"}
-            "
-        >
-            ${
-                market.change>=0
-                ?"+":""
-            }${market.change.toFixed(2)}%
+        <span class="${market.change>=0?"green":"red"}">
+            ${market.change>=0?"+":""}${market.change.toFixed(2)}%
         </span>
 
     `;
-
 }
-
 
 /* =====================================================
    ORDER BOOK
@@ -1660,27 +1318,18 @@ function updateInfo(){
 function renderOrderBook(){
 
     const market=
-        markets.find(
-            m =>
-                m.symbol===selected
-        );
+        markets.find(m=>m.symbol===selected);
 
     if(!market)
         return;
 
     let html="";
 
-    for(
-        let i=5;
-        i>=1;
-        i--
-    ){
+    for(let i=5;i>=1;i--){
 
         const price=
             market.price*
-            (
-                1+i*.0007
-            );
+            (1+i*.0007);
 
         html+=`
 
@@ -1691,16 +1340,11 @@ function renderOrderBook(){
                 </span>
 
                 <span>
-                    ${random(
-                        50,
-                        5000
-                    ).toFixed(1)}
+                    ${random(50,5000).toFixed(1)}
                 </span>
 
             </div>
-
         `;
-
     }
 
     html+=`
@@ -1708,20 +1352,13 @@ function renderOrderBook(){
         <div class="bookMid">
             ${priceFormat(market.price)}
         </div>
-
     `;
 
-    for(
-        let i=1;
-        i<=5;
-        i++
-    ){
+    for(let i=1;i<=5;i++){
 
         const price=
             market.price*
-            (
-                1-i*.0007
-            );
+            (1-i*.0007);
 
         html+=`
 
@@ -1732,25 +1369,15 @@ function renderOrderBook(){
                 </span>
 
                 <span>
-                    ${random(
-                        50,
-                        5000
-                    ).toFixed(1)}
+                    ${random(50,5000).toFixed(1)}
                 </span>
 
             </div>
-
         `;
-
     }
 
-    document.getElementById(
-        "orderBook"
-    ).innerHTML=
-        html;
-
+    document.getElementById("orderBook").innerHTML=html;
 }
-
 
 /* =====================================================
    POZİSYON
@@ -1759,29 +1386,18 @@ function renderOrderBook(){
 function currentPrice(symbol){
 
     const market=
-        markets.find(
-            m =>
-                m.symbol===symbol
-        );
+        markets.find(m=>m.symbol===symbol);
 
-    return market
-        ?market.price
-        :0;
-
+    return market?market.price:0;
 }
-
 
 function calculatePNL(position){
 
     const price=
-        currentPrice(
-            position.symbol
-        );
+        currentPrice(position.symbol);
 
     const change=
-        (
-            price-position.entry
-        )/
+        (price-position.entry)/
         position.entry*
         100;
 
@@ -1793,23 +1409,17 @@ function calculatePNL(position){
     position.leverage*
     position.margin/
     100;
-
 }
-
 
 function levels(position){
 
     const entry=position.entry;
 
     const tpDistance=
-        position.tp/
-        100/
-        position.leverage;
+        position.tp/100/position.leverage;
 
     const slDistance=
-        position.sl/
-        100/
-        position.leverage;
+        position.sl/100/position.leverage;
 
     let tp;
     let sl;
@@ -1817,38 +1427,19 @@ function levels(position){
 
     if(position.side==="LONG"){
 
-        tp=
-            entry*
-            (1+tpDistance);
-
-        sl=
-            entry*
-            (1-slDistance);
+        tp=entry*(1+tpDistance);
+        sl=entry*(1-slDistance);
 
         liquidation=
-            entry*
-            (
-                1-
-                1/position.leverage
-            );
+            entry*(1-1/position.leverage);
 
     }else{
 
-        tp=
-            entry*
-            (1-tpDistance);
-
-        sl=
-            entry*
-            (1+slDistance);
+        tp=entry*(1-tpDistance);
+        sl=entry*(1+slDistance);
 
         liquidation=
-            entry*
-            (
-                1+
-                1/position.leverage
-            );
-
+            entry*(1+1/position.leverage);
     }
 
     return{
@@ -1856,71 +1447,45 @@ function levels(position){
         sl,
         liquidation
     };
-
 }
-
-
-/* =====================================================
-   POZİSYON AÇ
-===================================================== */
 
 function openPosition(side){
 
     const margin=
         Number(
-            document.getElementById(
-                "margin"
-            ).value
+            document.getElementById("margin").value
         );
 
     const leverage=
         Number(
-            document.getElementById(
-                "lev"
-            ).value
+            document.getElementById("lev").value
         );
 
     const tp=
         Number(
-            document.getElementById(
-                "tp"
-            ).value
+            document.getElementById("tp").value
         );
 
     const sl=
         Number(
-            document.getElementById(
-                "sl"
-            ).value
+            document.getElementById("sl").value
         );
 
     const price=
         currentPrice(selected);
 
-    if(
-        !Number.isFinite(margin)||
-        margin<=0
-    ){
+    if(!Number.isFinite(margin)||margin<=0){
 
-        alert(
-            "Geçerli bir marjin gir."
-        );
+        alert("Geçerli bir marjin gir.");
 
         return;
-
     }
 
-    if(
-        margin>
-        balance-reserved
-    ){
+    if(margin>balance-reserved){
 
-        alert(
-            "Yetersiz bakiye!"
-        );
+        alert("Yetersiz bakiye!");
 
         return;
-
     }
 
     positions.push({
@@ -1930,13 +1495,9 @@ function openPosition(side){
             Math.random(),
 
         symbol:selected,
-
         side:side,
-
         entry:price,
-
         margin:margin,
-
         leverage:leverage,
 
         tp:
@@ -1948,44 +1509,26 @@ function openPosition(side){
             Number.isFinite(sl)
             ?sl
             :0
-
     });
 
     reserved+=margin;
 
     renderPositions();
-
     updateWallet();
-
     drawChart();
-
-    /* POZİSYONU HEMEN KAYDET */
-    saveGame();
-
 }
 
-
-/* =====================================================
-   POZİSYON KAPAT
-===================================================== */
-
-function closePosition(
-    id,
-    reason="MANUEL"
-){
+function closePosition(id,reason="MANUEL"){
 
     const index=
         positions.findIndex(
-            p =>
-                String(p.id)===
-                String(id)
+            p=>String(p.id)===String(id)
         );
 
     if(index<0)
         return;
 
-    const position=
-        positions[index];
+    const position=positions[index];
 
     const result=
         calculatePNL(position);
@@ -1994,8 +1537,7 @@ function closePosition(
         position.margin+
         result;
 
-    reserved-=
-        position.margin;
+    reserved-=position.margin;
 
     if(reserved<0)
         reserved=0;
@@ -2003,41 +1545,21 @@ function closePosition(
     history.unshift({
 
         time:
-            new Date()
-            .toLocaleTimeString(),
+            new Date().toLocaleTimeString(),
 
-        symbol:
-            position.symbol,
-
-        side:
-            position.side,
-
-        pnl:
-            result,
-
-        reason:
-            reason
-
+        symbol:position.symbol,
+        side:position.side,
+        pnl:result,
+        reason:reason
     });
 
-    positions.splice(
-        index,
-        1
-    );
+    positions.splice(index,1);
 
     renderPositions();
-
     renderHistory();
-
     updateWallet();
-
     drawChart();
-
-    /* KAPANDIĞINI DA KAYDET */
-    saveGame();
-
 }
-
 
 /* =====================================================
    POZİSYON TABLOSU
@@ -2046,15 +1568,11 @@ function closePosition(
 function renderPositions(){
 
     const body=
-        document.getElementById(
-            "positions"
-        );
+        document.getElementById("positions");
 
     let total=0;
 
-    if(
-        positions.length===0
-    ){
+    if(positions.length===0){
 
         body.innerHTML=`
 
@@ -2068,226 +1586,168 @@ function renderPositions(){
                 </td>
 
             </tr>
-
         `;
 
-        document.getElementById(
-            "totalPnl"
-        ).textContent="0.00";
+        document.getElementById("totalPnl").textContent=
+            "0.00";
 
         return;
-
     }
 
     body.innerHTML=
-        positions.map(
-            position=>{
+        positions.map(position=>{
 
-                const pnl=
-                    calculatePNL(
-                        position
-                    );
+            const pnl=
+                calculatePNL(position);
 
-                total+=pnl;
+            total+=pnl;
 
-                const l=
-                    levels(position);
+            const l=
+                levels(position);
 
-                return`
+            return`
 
-                    <tr>
+                <tr>
 
-                        <td>
-                            ${position.symbol}
-                        </td>
+                    <td>
+                        ${position.symbol}
+                    </td>
 
-                        <td
-                            class="
-                            ${
-                                position.side===
-                                "LONG"
-                                ?"green"
-                                :"red"
-                            }
-                            "
+                    <td class="${
+                        position.side==="LONG"
+                        ?"green"
+                        :"red"
+                    }">
+                        ${position.side}
+                    </td>
+
+                    <td>
+                        ${priceFormat(position.entry)}
+                    </td>
+
+                    <td>
+                        ${priceFormat(
+                            currentPrice(position.symbol)
+                        )}
+                    </td>
+
+                    <td>
+                        ${position.leverage}x
+                    </td>
+
+                    <td class="green">
+                        ${priceFormat(l.tp)}
+                    </td>
+
+                    <td class="red">
+                        ${priceFormat(l.sl)}
+                    </td>
+
+                    <td class="red">
+                        ${priceFormat(l.liquidation)}
+                    </td>
+
+                    <td class="${
+                        pnl>=0
+                        ?"green"
+                        :"red"
+                    }">
+                        ${pnl>=0?"+":""}${pnl.toFixed(2)}
+                    </td>
+
+                    <td>
+
+                        <button
+                            class="close"
+                            onclick="closePosition('${position.id}')"
                         >
-                            ${position.side}
-                        </td>
+                            Kapat
+                        </button>
 
-                        <td>
-                            ${priceFormat(
-                                position.entry
-                            )}
-                        </td>
+                    </td>
 
-                        <td>
-                            ${priceFormat(
-                                currentPrice(
-                                    position.symbol
-                                )
-                            )}
-                        </td>
+                </tr>
+            `;
 
-                        <td>
-                            ${position.leverage}x
-                        </td>
-
-                        <td class="green">
-                            ${priceFormat(l.tp)}
-                        </td>
-
-                        <td class="red">
-                            ${priceFormat(l.sl)}
-                        </td>
-
-                        <td class="red">
-                            ${priceFormat(
-                                l.liquidation
-                            )}
-                        </td>
-
-                        <td
-                            class="
-                            ${
-                                pnl>=0
-                                ?"green"
-                                :"red"
-                            }
-                            "
-                        >
-                            ${
-                                pnl>=0
-                                ?"+":""
-                            }${pnl.toFixed(2)}
-                        </td>
-
-                        <td>
-
-                            <button
-                                class="close"
-                                onclick="
-                                closePosition(
-                                    '${position.id}'
-                                )
-                                "
-                            >
-                                Kapat
-                            </button>
-
-                        </td>
-
-                    </tr>
-
-                `;
-
-            }
-        )
+        })
         .join("");
 
     const totalElement=
-        document.getElementById(
-            "totalPnl"
-        );
+        document.getElementById("totalPnl");
 
     totalElement.textContent=
-        (
-            total>=0
-            ?"+":""
-        )+
+        (total>=0?"+":"")+
         total.toFixed(2);
 
     totalElement.className=
-        total>=0
-        ?"green"
-        :"red";
-
+        total>=0?"green":"red";
 }
 
-
 /* =====================================================
-   TP / SL / LIQ
+   TP / SL / LIQUIDATION
 ===================================================== */
 
 function checkPositions(){
 
-    positions
-        .slice()
-        .forEach(
-            position=>{
+    positions.slice().forEach(position=>{
 
-                const price=
-                    currentPrice(
-                        position.symbol
-                    );
+        const price=
+            currentPrice(position.symbol);
 
-                const pnl=
-                    calculatePNL(
-                        position
-                    );
+        const pnl=
+            calculatePNL(position);
 
-                const percent=
-                    pnl/
-                    position.margin*
-                    100;
+        const percent=
+            pnl/position.margin*100;
 
-                if(
-                    position.tp>0&&
-                    percent>=position.tp
-                ){
+        if(
+            position.tp>0&&
+            percent>=position.tp
+        ){
 
-                    closePosition(
-                        position.id,
-                        "TP"
-                    );
+            closePosition(
+                position.id,
+                "TP"
+            );
 
-                    return;
+            return;
+        }
 
-                }
+        if(
+            position.sl>0&&
+            percent<=-position.sl
+        ){
 
-                if(
-                    position.sl>0&&
-                    percent<=-position.sl
-                ){
+            closePosition(
+                position.id,
+                "SL"
+            );
 
-                    closePosition(
-                        position.id,
-                        "SL"
-                    );
+            return;
+        }
 
-                    return;
+        const liq=
+            levels(position).liquidation;
 
-                }
+        if(
+            (
+                position.side==="LONG"&&
+                price<=liq
+            )||
+            (
+                position.side==="SHORT"&&
+                price>=liq
+            )
+        ){
 
-                const liq=
-                    levels(
-                        position
-                    ).liquidation;
+            closePosition(
+                position.id,
+                "LIQ"
+            );
+        }
 
-                if(
-                    (
-                        position.side===
-                        "LONG"&&
-                        price<=liq
-                    )||
-                    (
-                        position.side===
-                        "SHORT"&&
-                        price>=liq
-                    )
-                ){
-
-                    closePosition(
-                        position.id,
-                        "LIQ"
-                    );
-
-                }
-
-            }
-        );
-
+    });
 }
-
 
 /* =====================================================
    CÜZDAN
@@ -2297,29 +1757,21 @@ function updateWallet(){
 
     let unrealized=0;
 
-    positions.forEach(
-        position=>{
+    positions.forEach(position=>{
 
-            unrealized+=
-                calculatePNL(
-                    position
-                );
+        unrealized+=
+            calculatePNL(position);
 
-        }
-    );
+    });
 
     const equity=
         balance+
         unrealized;
 
-    document.getElementById(
-        "balance"
-    ).textContent=
+    document.getElementById("balance").textContent=
         money(balance);
 
-    document.getElementById(
-        "available"
-    ).textContent=
+    document.getElementById("available").textContent=
         money(
             Math.max(
                 0,
@@ -2327,17 +1779,9 @@ function updateWallet(){
             )
         );
 
-    document.getElementById(
-        "equity"
-    ).textContent=
+    document.getElementById("equity").textContent=
         money(equity);
-
 }
-
-
-/* =====================================================
-   RESET
-===================================================== */
 
 function resetAccount(){
 
@@ -2349,24 +1793,14 @@ function resetAccount(){
         return;
 
     balance=10000;
-
     reserved=0;
-
     positions=[];
-
     history=[];
 
     renderPositions();
-
     renderHistory();
-
     updateWallet();
-
-    /* RESET SONRASI KAYDET */
-    saveGame();
-
 }
-
 
 /* =====================================================
    GEÇMİŞ
@@ -2375,13 +1809,9 @@ function resetAccount(){
 function renderHistory(){
 
     const box=
-        document.getElementById(
-            "history"
-        );
+        document.getElementById("history");
 
-    if(
-        history.length===0
-    ){
+    if(history.length===0){
 
         box.innerHTML=
             `<span class="gray">
@@ -2389,52 +1819,41 @@ function renderHistory(){
             </span>`;
 
         return;
-
     }
 
     box.innerHTML=
         history
         .slice(0,30)
-        .map(
-            item=>`
+        .map(item=>`
 
-                <div class="historyRow">
+            <div class="historyRow">
 
-                    <span>
-                        ${item.time}
-                    </span>
+                <span>
+                    ${item.time}
+                </span>
 
-                    <span>
-                        ${item.symbol}
-                        <br>
-                        ${item.side}
-                        ·
-                        ${item.reason}
-                    </span>
+                <span>
+                    ${item.symbol}
+                    <br>
+                    ${item.side}
+                    ·
+                    ${item.reason}
+                </span>
 
-                    <span
-                        class="
-                        ${
-                            item.pnl>=0
-                            ?"green"
-                            :"red"
-                        }
-                        "
-                    >
-                        ${
-                            item.pnl>=0
-                            ?"+":""
-                        }${item.pnl.toFixed(2)}
-                    </span>
+                <span
+                    class="${
+                        item.pnl>=0
+                        ?"green"
+                        :"red"
+                    }"
+                >
+                    ${item.pnl>=0?"+":""}${item.pnl.toFixed(2)}
+                </span>
 
-                </div>
-
-            `
-        )
+            </div>
+        `)
         .join("");
-
 }
-
 
 /* =====================================================
    PİYASA HAREKETİ
@@ -2442,179 +1861,139 @@ function renderHistory(){
 
 function tickMarkets(){
 
-    markets.forEach(
-        market=>{
+    markets.forEach(market=>{
 
-            const oldPrice=
+        const oldPrice=
+            market.price;
+
+        const movement=
+            (Math.random()-.5)*
+            market.volatility*
+            .35;
+
+        market.price=
+            Math.max(
+                .000001,
+                market.price*
+                (1+movement)
+            );
+
+        const now=Date.now();
+        const interval=getStep();
+
+        let candle=
+            market.candles[
+                market.candles.length-1
+            ];
+
+        if(
+            !candle||
+            now-candle.time>=interval
+        ){
+
+            candle={
+
+                time:now,
+
+                open:oldPrice,
+
+                high:
+                    Math.max(
+                        oldPrice,
+                        market.price
+                    ),
+
+                low:
+                    Math.min(
+                        oldPrice,
+                        market.price
+                    ),
+
+                close:market.price
+            };
+
+            market.candles.push(candle);
+
+            if(market.candles.length>160)
+                market.candles.shift();
+
+        }else{
+
+            candle.close=
                 market.price;
 
-            const movement=
-                (
-                    Math.random()-.5
-                )*
-                market.volatility*
-                .35;
-
-            market.price=
+            candle.high=
                 Math.max(
-                    .000001,
-                    market.price*
-                    (1+movement)
+                    candle.high,
+                    market.price
                 );
 
-            const now=Date.now();
-
-            const interval=
-                getStep();
-
-            let candle=
-                market.candles[
-                    market.candles.length-1
-                ];
-
-            if(
-                !candle||
-                now-candle.time>=interval
-            ){
-
-                candle={
-
-                    time:now,
-
-                    open:oldPrice,
-
-                    high:
-                        Math.max(
-                            oldPrice,
-                            market.price
-                        ),
-
-                    low:
-                        Math.min(
-                            oldPrice,
-                            market.price
-                        ),
-
-                    close:
-                        market.price
-
-                };
-
-                market.candles.push(
-                    candle
+            candle.low=
+                Math.min(
+                    candle.low,
+                    market.price
                 );
-
-                if(
-                    market.candles.length>160
-                ){
-
-                    market.candles.shift();
-
-                }
-
-            }else{
-
-                candle.close=
-                    market.price;
-
-                candle.high=
-                    Math.max(
-                        candle.high,
-                        market.price
-                    );
-
-                candle.low=
-                    Math.min(
-                        candle.low,
-                        market.price
-                    );
-
-            }
-
-            market.marketCap=
-                market.price*
-                market.supply;
-
-            market.change=
-                (
-                    market.price-
-                    market.start
-                )/
-                market.start*
-                100;
-
-            if(
-                Math.abs(
-                    market.change
-                )>100
-            ){
-
-                market.start=
-                    market.price;
-
-                market.change=0;
-
-            }
-
         }
-    );
 
+        market.marketCap=
+            market.price*
+            market.supply;
+
+        market.change=
+            (
+                market.price-
+                market.start
+            )/
+            market.start*
+            100;
+
+        if(Math.abs(market.change)>100){
+
+            market.start=
+                market.price;
+
+            market.change=0;
+        }
+    });
 }
-
 
 /* =====================================================
    TIMEFRAME
 ===================================================== */
 
 document
-    .querySelectorAll(".tf")
-    .forEach(
-        button=>{
+.querySelectorAll(".tf")
+.forEach(button=>{
 
-            button.onclick=()=>{
+    button.onclick=()=>{
 
-                document
-                    .querySelectorAll(".tf")
-                    .forEach(
-                        x =>
-                            x.classList
-                            .remove("active")
-                    );
+        document
+        .querySelectorAll(".tf")
+        .forEach(
+            x=>x.classList.remove("active")
+        );
 
-                button.classList.add(
-                    "active"
-                );
+        button.classList.add("active");
 
-                timeframe=
-                    button.dataset.tf;
+        timeframe=
+            button.dataset.tf;
 
-                markets.forEach(
-                    createCandles
-                );
+        markets.forEach(createCandles);
 
-                selectMarket(
-                    selected
-                );
-
-                saveGame();
-
-            };
-
-        }
-    );
-
+        selectMarket(selected);
+    };
+});
 
 /* =====================================================
    SEARCH
 ===================================================== */
 
 document
-    .getElementById("search")
-    .addEventListener(
-        "input",
-        renderMarkets
-    );
-
+.getElementById("search")
+.addEventListener(
+    "input",
+    renderMarkets
+);
 
 /* =====================================================
    ANA DÖNGÜ
@@ -2625,88 +2004,46 @@ let lastDraw=0;
 let lastBook=0;
 let lastMarket=0;
 let lastPosition=0;
-let lastSave=0;
-
 
 function loop(time){
 
-    if(
-        time-lastTick>250
-    ){
+    if(time-lastTick>250){
 
         tickMarkets();
-
         lastTick=time;
-
     }
 
-    if(
-        time-lastDraw>100
-    ){
+    if(time-lastDraw>100){
 
         drawChart();
-
         updateInfo();
 
         lastDraw=time;
-
     }
 
-    if(
-        time-lastBook>500
-    ){
+    if(time-lastBook>500){
 
         renderOrderBook();
-
         lastBook=time;
-
     }
 
-    if(
-        time-lastMarket>500
-    ){
+    if(time-lastMarket>500){
 
         updateMarkets();
-
         lastMarket=time;
-
     }
 
-    if(
-        time-lastPosition>400
-    ){
+    if(time-lastPosition>400){
 
         checkPositions();
-
         renderPositions();
-
         updateWallet();
 
         lastPosition=time;
-
     }
 
-    /*
-       HER 2 SANİYEDE BİR
-       OTOMATİK KAYDET
-    */
-
-    if(
-        time-lastSave>2000
-    ){
-
-        saveGame();
-
-        lastSave=time;
-
-    }
-
-    requestAnimationFrame(
-        loop
-    );
-
+    requestAnimationFrame(loop);
 }
-
 
 /* =====================================================
    BAŞLAT
@@ -2714,18 +2051,7 @@ function loop(time){
 
 renderMarkets();
 
-if(
-    !markets.some(
-        m =>
-            m.symbol===selected
-    )
-){
-
-    selected="KEMCOIN";
-
-}
-
-selectMarket(selected);
+selectMarket("KEMCOIN");
 
 renderPositions();
 
@@ -2736,6 +2062,39 @@ updateWallet();
 resizeCanvas();
 
 requestAnimationFrame(loop);
+
+/* =====================================================
+   KEMEX PWA / SERVICE WORKER
+===================================================== */
+
+if("serviceWorker" in navigator){
+
+    window.addEventListener(
+        "load",
+        ()=>{
+
+            navigator.serviceWorker
+            .register("./sw.js")
+            .then(
+                ()=>{
+                    console.log(
+                        "KEMEX PWA aktif"
+                    );
+                }
+            )
+            .catch(
+                error=>{
+                    console.log(
+                        "Service Worker hatası:",
+                        error
+                    );
+                }
+            );
+
+        }
+    );
+
+}
 
 </script>
 
