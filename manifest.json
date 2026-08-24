@@ -1,0 +1,11 @@
+{
+  "name": "KEMEX",
+  "short_name": "KEMEX",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#090b10",
+  "theme_color": "#131722",
+  "orientation": "landscape",
+  "description": "KEMEX Exchange Demo",
+  "icons": []
+}
